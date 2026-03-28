@@ -20,7 +20,7 @@ export function AppHeader({ isLoggedIn }: AppHeaderProps) {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href="https://github.com/futoro-uk/whose-bean"
+            href="https://github.com/futoro-ltd/whose-bean"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 rounded-md hover:bg-accent transition-colors"
