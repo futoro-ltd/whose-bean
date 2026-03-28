@@ -1,0 +1,102 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+<!-- Gradient and Filter Definitions -->
+<defs>
+<!-- Top-to-bottom gradient with fuchsia-600, violet-600, and indigo-600 -->
+<linearGradient id="beanGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" style="stop-color:#c026d3;stop-opacity:1" />   <!-- fuchsia-600 -->
+<stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1" />  <!-- violet-600 -->
+<stop offset="100%" style="stop-color:#4f46e5;stop-opacity:1" /> <!-- indigo-600 -->
+</linearGradient>
+
+<!-- Filter for fuzzy/blurry effects -->
+<filter id="fuzzyGlow" x="-50%" y="-50%" width="200%" height="200%">
+  <feGaussianBlur in="SourceGraphic" stdDeviation="8" />
+</filter>
+
+
+</defs>
+
+<!-- Scaled Group moved up to sit near the top of the canvas -->
+
+<g transform="translate(200, 185) scale(1.55) translate(-200, -200)">
+<!-- The Kidney Bean Body -->
+<path d="M160,120
+C110,130 90,210 110,270
+C130,330 200,340 240,310
+C270,290 290,240 280,200
+C270,140 230,120 200,145
+C185,155 175,135 160,120 Z"
+fill="url(#beanGradient)"
+stroke="#312e81"
+stroke-width="3" />
+
+<!-- Highlight for shine (Fuzzed and moved left) -->
+<path d="M125,170 C115,200 120,240 135,260"
+      fill="none"
+      stroke="white"
+      stroke-width="10"
+      stroke-linecap="round"
+      opacity="0.2"
+      filter="url(#fuzzyGlow)" />
+
+<!-- Animated Facial Group -->
+<g>
+  <animateTransform attributeName="transform"
+                    type="translate"
+                    values="0,0; 5,-3; 0,0; -5,-3; 0,0"
+                    dur="4s"
+                    repeatCount="indefinite"
+                    calcMode="spline"
+                    keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1" />
+
+  <!-- Light Facial Features (Cream/Off-white) -->
+  <g fill="#fdf5e6">
+    <!-- Left Eye -->
+    <ellipse cx="185" cy="225" rx="5" ry="5">
+      <animate attributeName="ry"
+               values="5; 0.5; 5; 5; 0.5; 5; 5"
+               keyTimes="0; 0.05; 0.1; 0.4; 0.45; 0.5; 1"
+               dur="2s"
+               repeatCount="indefinite" />
+      <animate attributeName="rx"
+               values="5; 7; 5; 5; 7; 5; 5"
+               keyTimes="0; 0.05; 0.1; 0.4; 0.45; 0.5; 1"
+               dur="2s"
+               repeatCount="indefinite" />
+    </ellipse>
+    
+    <!-- Right Eye -->
+    <ellipse cx="235" cy="225" rx="5" ry="5">
+      <animate attributeName="ry"
+               values="5; 0.5; 5; 5; 0.5; 5; 5"
+               keyTimes="0; 0.05; 0.1; 0.4; 0.45; 0.5; 1"
+               dur="2s"
+               repeatCount="indefinite" />
+      <animate attributeName="rx"
+               values="5; 7; 5; 5; 7; 5; 5"
+               keyTimes="0; 0.05; 0.1; 0.4; 0.45; 0.5; 1"
+               dur="2s"
+               repeatCount="indefinite" />
+    </ellipse>
+  </g>
+
+  <!-- Mouth -->
+  <path fill="none" stroke="#fdf5e6" stroke-width="3" stroke-linecap="round">
+    <animate attributeName="d" 
+             values="M195,250 C205,265 215,265 225,250; 
+                     M190,250 C205,270 215,270 230,250; 
+                     M195,250 C205,265 215,265 225,250" 
+           dur="4s" 
+           repeatCount="indefinite" />
+  </path>
+        
+  <!-- Fuzzy Rosy Cheeks -->
+  <g filter="url(#fuzzyGlow)" opacity="0.3">
+    <circle cx="170" cy="245" r="12" fill="#ff9999" />
+    <circle cx="250" cy="245" r="12" fill="#ff9999" />
+  </g>
+</g>
+
+
+</g>
+</svg>

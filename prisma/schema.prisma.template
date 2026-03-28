@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "{{PROVIDER}}"
+  url      = "{{DATABASE_URL}}"
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  password       String
+  role           String   @default("user")
+  createdAt      DateTime @default(now())
+  domains        Domain[]
+  allowedDomains Domain[] @relation("DomainAccess")
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      String   @default("user")
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Domain {
+  id                 String   @id @default(cuid())
+  domain             String   @unique
+  userId             String?
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+  isPublic           Boolean  @default(false)
+  allowedUsers       User[]   @relation("DomainAccess")
+  analyticsEntries   AnalyticsEntry[]
+  pageViews          PageView[]
+}
+
+model AnalyticsEntry {
+  id            String   @id @default(cuid())
+  sessionId     String
+  page          String
+  referrer      String?
+  userAgent     String?
+  browser       String?
+  os            String?
+  device        String?
+  country       String?
+  city          String?
+  latitude      Float?
+  longitude     Float?
+  screenWidth   Int?
+  screenHeight  Int?
+  language      String?
+  isBot         Boolean  @default(false)
+  timestamp     DateTime @default(now())
+  domainId      String
+  domain        Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+}
+
+model PageView {
+  id          String   @id @default(cuid())
+  path        String
+  views       Int      @default(1)
+  uniqueViews Int      @default(1)
+  lastViewed  DateTime @default(now())
+  domainId    String
+  domain      Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@unique([path, domainId])
+}

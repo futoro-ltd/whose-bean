@@ -1,0 +1,123 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SSH_USER: ${{ secrets.SSH_USER }}
+  SSH_HOST: ${{ secrets.SSH_HOST }}
+  USER: ${{ forgejo.actor }}
+  IMAGE_NAME: ${{ forgejo.repository }}
+  REPOSITORY_NAME: ${{ forgejo.repository }}
+  CONTAINER_NAME: ${{ vars.REPO_SHORT_NAME }}
+  NODE_VERSION: '20'
+  ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+
+jobs:
+  workflow-test:
+    name: Test Forgejo Workflow
+    runs-on: docker
+
+    steps:
+      - name: Show available variables
+        run: |
+          echo "USER: $USER"
+          echo "IMAGE_NAME: $IMAGE_NAME"
+          echo "REPOSITORY_NAME: $REPOSITORY_NAME"
+          echo "CONTAINER_NAME: $CONTAINER_NAME"
+          echo "ALLOWED_ORIGINS: $ALLOWED_ORIGINS"
+
+  # test:
+  #   name: Test
+  #   runs-on: docker
+  #   needs: setup
+
+  #   steps:
+  #     - name: Install Node.js
+  #       run: |
+  #         apk add --no-cache nodejs npm
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Install Dependencies
+  #       run: npm ci
+
+  #     - name: Generate Prisma Client
+  #       run: npx prisma generate
+
+  #     - name: Run Tests
+  #       run: npm run test:run
+
+  build:
+    name: Build and Export Image
+    runs-on: docker
+    needs: workflow-test
+
+    steps:
+      - name: Install Node.js
+        run: |
+          apk add --no-cache nodejs npm
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Export Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: ${{ env.IMAGE_NAME }}:latest
+          outputs: type=docker,dest=/tmp/image.tar
+          build-args: |
+            "USE_POSTGRES=${{ vars.USE_POSTGRES }}"
+            "DATABASE_URL=file:/app/data/dev.db"
+            "JWT_SECRET=${{ secrets.JWT_SECRET }}"
+            "SMTP_HOST=${{ secrets.SMTP_HOST }}"
+            "SMTP_PORT=${{ secrets.SMTP_PORT }}"
+            "SMTP_USER=${{ secrets.SMTP_USER }}"
+            "SMTP_PASS=${{ secrets.SMTP_PASS }}"
+            "SMTP_FROM=${{ secrets.SMTP_FROM }}"
+            "APP_URL=${{ vars.APP_URL }}"
+            "ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}"
+            "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ vars.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}"
+
+      - name: Log into Remote Host Server
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy Image to Remote Host Server
+        run: |
+          cat /tmp/image.tar | ssh ${{ env.SSH_USER }}@${{ env.SSH_HOST }} "docker load"
+
+      - name: Restart Container on Remote Host Server
+        run: |
+          ssh ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << 'EOF'
+            docker stop ${{ env.CONTAINER_NAME }} || true
+            docker rm ${{ env.CONTAINER_NAME }} || true
+            docker run -d \
+              --name ${{ env.CONTAINER_NAME }} \
+              -p 127.0.0.1:${{ vars.EXPOSED_PORT }}:9500 \
+              -v whose-bean-data:/app/data \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e USE_POSTGRES=${{ vars.USE_POSTGRES }} \
+              -e DATABASE_URL="file:/app/data/dev.db" \
+              -e SMTP_HOST=${{ secrets.SMTP_HOST }} \
+              -e SMTP_PORT=${{ secrets.SMTP_PORT }} \
+              -e SMTP_USER=${{ secrets.SMTP_USER }} \
+              -e SMTP_PASS=${{ secrets.SMTP_PASS }} \
+              -e SMTP_FROM=${{ secrets.SMTP_FROM }} \
+              -e ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }} \
+              -e APP_URL=${{ vars.APP_URL }} \
+              --restart unless-stopped \
+              --network localhost \
+              ${{ env.IMAGE_NAME }}:latest            
+          EOF
+
+      - name: Clean Up
+        run: rm -rf ~/.ssh
